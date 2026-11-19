@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Генератор на работни листи по математика – 1. клас</title>
+<style>
+  :root {
+    --blue: #315b86;
+    --line: #c8d6e2;
+    --pale: #edf4fa;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    padding: 20px;
+    background: #f1f4f8;
+    color: #26364a;
+    font-family: Arial, sans-serif;
+  }
+  .controls {
+    max-width: 900px;
+    margin: 0 auto 22px;
+    padding: 22px;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+  }
+  h1 {
+    text-align: center;
+    color: var(--blue);
+    margin: 0 0 8px;
+  }
+  .subtitle {
+    text-align: center;
+    margin: 0 0 20px;
+  }
+  .settings {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+  label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 6px;
+  }
+  select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #b9c9d8;
+    border-radius: 7px;
+    font-size: 15px;
+    background: white;
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 17px;
+  }
+  button {
+    border: 0;
+    border-radius: 8px;
+    padding: 12px 17px;
+    font-size: 15px;
+    cursor: pointer;
+    background: #3679b9;
+    color: white;
+    transition: filter 0.15s ease;
+  }
+  button:hover {
+    filter: brightness(0.92);
+  }
+  button.green {
+    background: #39865c;
+  }
+  button.gray {
+    background: #687887;
+  }
+  .tip {
+    font-size: 13px;
+    color: #55687a;
+    margin: 12px 0 0;
+    background: #f5f9fc;
+    padding: 9px 12px;
+    border-radius: 7px;
+    border-left: 3px solid #3679b9;
+  }
+
+  /* Работен лист и лист с отговори */
+  #worksheet, #answerSheet {
+    max-width: 850px;
+    margin: 0 auto 22px;
+    padding: 28px;
+    background: white;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  }
+  .paper-head {
+    text-align: center;
+    border-bottom: 2px solid #789bb9;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+  }
+  .paper-head h2 {
+    color: var(--blue);
+    margin: 4px;
+    font-size: 22px;
+  }
+  .paper-head p {
+    margin: 5px;
+  }
+  .name-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin: 16px 0 20px;
+  }
+  .name-row span {
+    flex: 1 1 180px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 5px;
+  }
+  .task-title {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 18px;
+    font-weight: bold;
+    margin: 18px 0 11px;
+  }
+  .task-points-badge {
+    font-size: 13px;
+    font-weight: bold;
+    color: var(--blue);
+    background: var(--pale);
+    border: 1px solid var(--line);
+    padding: 3px 9px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .exercises {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .exercise {
+    position: relative;
+    min-height: 62px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 21px;
+    font-weight: bold;
+    border: 1px solid #aebfd0;
+    background-color: #fff;
+    background-image: linear-gradient(#dce5ed 1px, transparent 1px), linear-gradient(90deg, #dce5ed 1px, transparent 1px);
+    background-size: 18px 18px;
+    padding: 4px 8px;
+  }
+  .ex-pts {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    font-size: 11px;
+    font-weight: bold;
+    color: #5c738a;
+    background: rgba(255, 255, 255, 0.88);
+    padding: 1px 5px;
+    border-radius: 4px;
+    line-height: 1.2;
+  }
+  .expr-edit {
+    padding: 3px 7px;
+    border-radius: 5px;
+    min-width: 75px;
+    text-align: right;
+    color: #26364a;
+    outline: none;
+    transition: background-color 0.15s, box-shadow 0.15s;
+  }
+  .expr-edit:hover, .problem-box:hover, .task-points-badge:hover, [contenteditable="true"]:hover {
+    background-color: rgba(54, 121, 185, 0.08);
+    cursor: text;
+  }
+  .expr-edit:focus, .problem-box:focus, .task-points-badge:focus, [contenteditable="true"]:focus {
+    background-color: #fffbe6;
+    box-shadow: 0 0 0 2px #3679b9;
+    outline: none;
+  }
+  .answer-box {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    border: 1.5px solid var(--blue);
+    vertical-align: middle;
+    background: #fff;
+    flex-shrink: 0;
+  }
+  .problem-box {
+    padding: 14px;
+    min-height: 95px;
+    border: 1px solid #aebfd0;
+    line-height: 1.65;
+    color: #26364a;
+    background-image: linear-gradient(#e2eaf1 1px, transparent 1px);
+    background-size: 100% 27px;
+    transition: background-color 0.15s, box-shadow 0.15s;
+  }
+  .work-lines {
+    margin-top: 10px;
+  }
+  .work-line {
+    height: 29px;
+    border-bottom: 1px solid #9aabba;
+  }
+  .answer-line {
+    margin-top: 9px;
+  }
+  .reflection {
+    margin-top: 18px;
+    border: 2px dashed #82a7c7;
+    padding: 12px 15px;
+    border-radius: 9px;
+  }
+  .reflection h3 {
+    color: var(--blue);
+    margin: 0 0 7px;
+    font-size: 16px;
+  }
+  .reflection p {
+    margin: 6px 0;
+    font-size: 14px;
+  }
+  .choices {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    font-size: 14px;
+  }
+
+  /* Компактна скала за оценяване след самооценката */
+  .grading-box {
+    margin-top: 12px;
+    border: 1px solid #c2d1df;
+    background: #f9fcff;
+    border-radius: 7px;
+    padding: 8px 11px;
+  }
+  .grading-top {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 5px;
+    font-size: 12.5px;
+    font-weight: bold;
+    color: var(--blue);
+  }
+  .scale-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11.5px;
+    line-height: 1.25;
+    background: #fff;
+  }
+  .scale-table th, .scale-table td {
+    border: 1px solid #c8d6e2;
+    padding: 3.5px 6px;
+    text-align: left;
+  }
+  .scale-table th {
+    background: var(--pale);
+    color: var(--blue);
+    font-size: 11.5px;
+  }
+
+  .footer {
+    text-align: center;
+    margin-top: 14px;
+    color: #718397;
+    font-size: 12px;
+  }
+  #answerSheet {
+    display: none;
+  }
+  #answerSheet h2 {
+    color: var(--blue);
+    text-align: center;
+    margin-top: 0;
+  }
+  .answer-meta {
+    background: #f5f9fc;
+    border-left: 3px solid var(--blue);
+    padding: 10px 12px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+  }
+  .answer-list {
+    columns: 2;
+    line-height: 1.9;
+  }
+  .problem-answer {
+    margin-top: 12px;
+    padding: 10px;
+    background: var(--pale);
+    border-radius: 6px;
+  }
+  .teacher-scale {
+    margin-top: 12px;
+  }
+
+  @media (max-width: 600px) {
+    body {
+      padding: 8px;
+    }
+    .settings {
+      grid-template-columns: 1fr;
+    }
+    #worksheet, #answerSheet {
+      padding: 16px;
+    }
+    .exercise {
+      font-size: 17px;
+      min-height: 55px;
+    }
+    .answer-list {
+      columns: 1;
+    }
+  }
+
+  @media print {
+    body {
+      background: white;
+      padding: 0;
+    }
+    .controls {
+      display: none !important;
+    }
+    #worksheet, #answerSheet {
+      box-shadow: none;
+      margin: 0;
+      max-width: none;
+      padding: 7mm 8mm;
+    }
+    #answerSheet {
+      display: block !important;
+      page-break-before: always;
+    }
+    .expr-edit, .problem-box, .task-points-badge, [contenteditable="true"] {
+      background-color: transparent !important;
+      box-shadow: none !important;
+    }
+    .task-points-badge {
+      border-color: #9aabba;
+    }
+    .grading-box {
+      margin-top: 10px;
+      padding: 6px 9px;
+    }
+    .scale-table th, .scale-table td {
+      padding: 2.5px 5px;
+      font-size: 11px;
+    }
+    @page {
+      size: A4;
+      margin: 6mm 7mm;
+    }
+  }
+</style>
+</head>
+<body>
+
+<section class="controls">
+  <h1>📚 Генератор на работни листи</h1>
+  <p class="subtitle">Математика – 1. клас</p>
+  <div class="settings">
+    <div>
+      <label for="level">Вид на упражненията</label>
+      <select id="level">
+        <option value="calc10">Събиране и изваждане до 10</option>
+        <option value="calc20noCross">Събиране и изваждане до 20 без преминаване</option>
+        <option value="calc20cross">Събиране и изваждане до 20 с преминаване</option>
+      </select>
+    </div>
+    <div>
+      <label for="count">Брой числови задачи</label>
+      <select id="count">
+        <option>4</option>
+        <option>6</option>
+        <option selected>8</option>
+        <option>10</option>
+        <option>12</option>
+        <option>16</option>
+        <option>20</option>
+      </select>
+    </div>
+    <div>
+      <label for="theme">Тема на текстовата задача</label>
+      <select id="theme">
+        <option value="mixed">Различни теми (случайно)</option>
+        <option value="school">В училище</option>
+        <option value="nature">В природата</option>
+        <option value="animals">Животни</option>
+        <option value="toys">Играчки</option>
+        <option value="fruit">Плодове</option>
+      </select>
+    </div>
+    <div>
+      <label for="style">Оформление</label>
+      <select id="style">
+        <option value="classic">Класически синьо-сиви квадратчета</option>
+        <option value="large">По-големи квадратчета</option>
+      </select>
+    </div>
+    <div>
+      <label for="exPoints">Точки за всяка числова задача</label>
+      <select id="exPoints">
+        <option value="1" selected>1 т.</option>
+        <option value="2">2 т.</option>
+        <option value="3">3 т.</option>
+      </select>
+    </div>
+    <div>
+      <label for="probPoints">Точки за текстовата задача</label>
+      <select id="probPoints">
+        <option value="2">2 т.</option>
+        <option value="3" selected>3 т.</option>
+        <option value="4">4 т.</option>
+        <option value="5">5 т.</option>
+      </select>
+    </div>
+    <div style="grid-column: 1 / -1;">
+      <label for="scaleType">Скала за оценяване</label>
+      <select id="scaleType">
+        <option value="friendly1st" selected>1. клас – похвална скала (Отлично / Много добро / Добро / За упражнение)</option>
+        <option value="levels4">Нива на усвояване (Високо / Добро / Базово / Начално)</option>
+        <option value="percent">Процентова скала (90–100% / 75–89% / 50–74% / под 50%)</option>
+      </select>
+    </div>
+  </div>
+  <div class="actions">
+    <button type="button" onclick="generate()">✨ Създай нов лист</button>
+    <button type="button" class="green" onclick="printAll()">🖨️ Печат на листа и отговорите</button>
+    <button type="button" class="gray" onclick="printWorksheet()">Печат само на работния лист</button>
+    <button type="button" class="gray" onclick="toggleAnswers()">Покажи/скрий отговорите</button>
+  </div>
+  <p class="tip">✏️ <b>Ръчно редактиране:</b> Можеш да кликнеш директно върху всяка задача в Задача 1, върху текста на Задача 2, върху точките или върху заглавието, за да ги промениш ръчно. Отговорите и скалата за учителя се обновяват автоматично!</p>
+</section>
+
+<main id="worksheet">
+  <div class="paper-head">
+    <h2 contenteditable="true" spellcheck="false">РАБОТЕН ЛИСТ ПО МАТЕМАТИКА</h2>
+    <p contenteditable="true" spellcheck="false">1. клас</p>
+  </div>
+  <div class="name-row">
+    <span>Име: </span>
+    <span>Дата: </span>
+    <span id="scoreSummaryLine">Точки: _____ / 11 т. &nbsp;|&nbsp; Оценка: _________</span>
+  </div>
+  
+  <div class="task-title">
+    <span contenteditable="true" spellcheck="false">Задача 1. Пресметни!</span>
+    <span class="task-points-badge" id="task1PointsBadge" contenteditable="true" spellcheck="false" title="Кликни за редакция на точките за Задача 1">8 × 1 т. = 8 т.</span>
+  </div>
+  <div class="exercises" id="exercises"></div>
+  
+  <div class="task-title">
+    <span contenteditable="true" spellcheck="false">Задача 2. Прочети и реши текстовата задача!</span>
+    <span class="task-points-badge" id="task2PointsBadge" contenteditable="true" spellcheck="false" title="Кликни за редакция на точките за Задача 2">3 т.</span>
+  </div>
+  <div class="problem-box" id="wordProblem" contenteditable="true" spellcheck="false"></div>
+  <div class="work-lines">
+    <b>Решение:</b>
+    <div class="work-line"></div>
+    <div class="work-line"></div>
+    <div class="answer-line"><b>Отговор:</b> __________________________________________</div>
+  </div>
+  
+  <section class="reflection">
+    <h3>⭐ Как се справих днес?</h3>
+    <p>Отбележи едно:</p>
+    <div class="choices">
+      <span>☐ 😊 Справих се сам/а.</span>
+      <span>☐ 🙂 Справих се с малко помощ.</span>
+      <span>☐ 😐 Имам нужда от още упражнение.</span>
+    </div>
+  </section>
+
+  <div class="grading-box">
+    <div class="grading-top">
+      <span contenteditable="true" spellcheck="false">📊 Скала за оценяване</span>
+      <span id="maxPointsLabel">Максимум: 11 т.</span>
+    </div>
+    <table class="scale-table" id="worksheetScaleTable">
+      <thead>
+        <tr>
+          <th>Ниво / Оценка</th>
+          <th>Точки</th>
+          <th>Ориентир</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="footer">Вярвам в себе си! Всеки ден ставам по-добър математик!</div>
+</main>
+
+<section id="answerSheet">
+  <h2>ОТГОВОРИ ЗА УЧИТЕЛЯ</h2>
+  <p id="answerLevel" class="answer-meta"></p>
+  <ol class="answer-list" id="answerList"></ol>
+  <div class="problem-answer" id="problemAnswer" contenteditable="true" spellcheck="false"></div>
+  <div class="teacher-scale">
+    <b>Скала за оценяване (общо: <span id="teacherMaxPoints">11 т.</span>):</b>
+    <table class="scale-table" id="teacherScaleTable">
+      <thead>
+        <tr>
+          <th>Ниво / Оценка</th>
+          <th>Точки</th>
+          <th>Ориентир</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</section>
+
+<script>
+const labels = {
+  calc10: "Събиране и изваждане до 10",
+  calc20noCross: "Събиране и изваждане до 20 без преминаване",
+  calc20cross: "Събиране и изваждане до 20 с преминаване"
+};
+
+let currentExercises = [];
+let currentProblem = null;
+let currentExPoints = 1;
+let currentProbPoints = 3;
+
+function rand(min, max) {
+  const lo = Math.ceil(min);
+  const hi = Math.floor(max);
+  if (hi < lo) return lo;
+  return Math.floor(Math.random() * (hi - lo + 1)) + lo;
+}
+
+function makeExercise(category) {
+  let a, b, op;
+  const isAdd = Math.random() < 0.5;
+
+  if (category === "calc10") {
+    if (isAdd) {
+      a = rand(0, 9);
+      b = rand(0, 10 - a);
+      op = "+";
+    } else {
+      a = rand(1, 10);
+      b = rand(0, a);
+      op = "−";
+    }
+  } else if (category === "calc20noCross") {
+    if (isAdd) {
+      a = rand(10, 19);
+      b = rand(1, Math.min(20 - a, 9 - (a % 10)));
+      op = "+";
+    } else {
+      a = rand(11, 19);
+      b = rand(1, Math.max(1, a % 10));
+      op = "−";
+    }
+  } else {
+    if (isAdd) {
+      a = rand(2, 9);
+      b = rand(11 - a, 10);
+      op = "+";
+    } else {
+      a = rand(11, 18);
+      b = rand((a % 10) + 1, 9);
+      op = "−";
+    }
+  }
+
+  return {
+    a,
+    b,
+    op,
+    text: `${a} ${op} ${b}`,
+    answer: op === "+" ? a + b : a - b
+  };
+}
+
+const stories = {
+  school: [
+    ["В класната стая имало {a} молива. Донесли още {b} молива. Колко молива има общо?", "+"],
+    ["На чина имало {a} тетрадки. Учениците взели {b} тетрадки. Колко тетрадки останали?", "−"]
+  ],
+  nature: [
+    ["В парка цъфнали {a} цветя. После разцъфнали още {b}. Колко цветя цъфнали общо?", "+"],
+    ["На дървото имало {a} листа. {b} листа паднали. Колко листа останали?", "−"]
+  ],
+  animals: [
+    ["На поляната пасели {a} зайчета. Дошли още {b}. Колко зайчета станали общо?", "+"],
+    ["До езерото имало {a} патенца. {b} патенца отплували. Колко останали?", "−"]
+  ],
+  toys: [
+    ["Иво имал {a} колички. Получил още {b}. Колко колички има сега?", "+"],
+    ["В кутията имало {a} кубчета. Децата взели {b}. Колко останали?", "−"]
+  ],
+  fruit: [
+    ["В кошницата имало {a} ябълки. Добавили още {b}. Колко ябълки има общо?", "+"],
+    ["На масата имало {a} круши. Изяли {b}. Колко круши останали?", "−"]
+  ]
+};
+
+function problemNumbers(category) {
+  const isAdd = Math.random() < 0.5;
+
+  if (category === "calc10") {
+    if (isAdd) {
+      const a = rand(1, 6);
+      return { a, b: rand(1, 10 - a), op: "+" };
+    } else {
+      const a = rand(4, 10);
+      return { a, b: rand(1, a - 1), op: "−" };
+    }
+  } else if (category === "calc20noCross") {
+    if (isAdd) {
+      const a = rand(11, 17);
+      return { a, b: rand(1, Math.min(20 - a, 9 - (a % 10))), op: "+" };
+    } else {
+      const a = rand(12, 19);
+      return { a, b: rand(1, Math.max(1, a % 10)), op: "−" };
+    }
+  } else {
+    if (isAdd) {
+      const a = rand(3, 9);
+      return { a, b: rand(11 - a, 9), op: "+" };
+    } else {
+      const a = rand(11, 18);
+      return { a, b: rand((a % 10) + 1, 9), op: "−" };
+    }
+  }
+}
+
+function makeProblem(category, theme) {
+  const themes = ["school", "nature", "animals", "toys", "fruit"];
+  const t = theme === "mixed" ? themes[rand(0, themes.length - 1)] : (stories[theme] ? theme : "school");
+  const n = problemNumbers(category);
+  const options = stories[t].filter(x => x[1] === n.op);
+  const template = (options.length ? options[rand(0, options.length - 1)][0] : stories[t][0][0]);
+  const answer = n.op === "+" ? n.a + n.b : n.a - n.b;
+
+  return {
+    text: template.replaceAll("{a}", String(n.a)).replaceAll("{b}", String(n.b)),
+    answer,
+    calculation: `${n.a} ${n.op} ${n.b} = ${answer}`,
+    theme: t
+  };
+}
+
+function evaluateExpression(rawText) {
+  const cleaned = rawText
+    .replace(/−/g, "-")
+    .replace(/–/g, "-")
+    .replace(/×/g, "*")
+    .replace(/·/g, "*")
+    .replace(/:/g, "/")
+    .replace(/[^0-9+\-*/().\s]/g, "")
+    .trim();
+
+  if (!cleaned) return "?";
+  try {
+    if (/^[0-9+\-*/().\s]+$/.test(cleaned)) {
+      const res = Function('"use strict";return (' + cleaned + ')')();
+      if (typeof res === "number" && Number.isFinite(res)) {
+        return Number.isInteger(res) ? res : Math.round(res * 100) / 100;
+      }
+    }
+  } catch (e) {}
+  return "?";
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function formatRange(minPts, maxPts) {
+  if (maxPts < minPts) return "—";
+  if (minPts === maxPts) return `${minPts} т.`;
+  return `${minPts} – ${maxPts} т.`;
+}
+
+function buildScaleRows(maxPts, scaleType) {
+  const safeMax = Math.max(1, maxPts);
+  const t1 = Math.max(1, Math.ceil(safeMax * 0.90));
+  const t2 = Math.max(1, Math.ceil(safeMax * 0.75));
+  const t3 = Math.max(1, Math.ceil(safeMax * 0.50));
+
+  const lowEnd = Math.max(0, t3 - 1);
+  const midEnd = Math.max(lowEnd, t2 - 1);
+  const highEnd = Math.max(midEnd, t1 - 1);
+
+  if (scaleType === "percent") {
+    return [
+      ["Отлично (90–100%)", formatRange(t1, safeMax), "Сигурно и точно справяне"],
+      ["Много добро (75–89%)", formatRange(t2, highEnd), "Добро разбиране с дребни неточности"],
+      ["Задоволително (50–74%)", formatRange(t3, midEnd), "Основни умения, нужна е практика"],
+      ["Под 50%", formatRange(0, lowEnd), "Нужна е насочена подкрепа"]
+    ];
+  }
+
+  if (scaleType === "levels4") {
+    return [
+      ["Високо ниво", formatRange(t1, safeMax), "Самостоятелно и правилно решаване"],
+      ["Добро ниво", formatRange(t2, highEnd), "Почти всички задачи са верни"],
+      ["Базово ниво", formatRange(t3, midEnd), "Справя се с повечето числови задачи"],
+      ["Начално ниво", formatRange(0, lowEnd), "Изисква помощ и още упражнения"]
+    ];
+  }
+
+  return [
+    ["🌟 Отлично", formatRange(t1, safeMax), "Браво! Справи се чудесно!"],
+    ["😊 Много добро", formatRange(t2, highEnd), "Много добро представяне!"],
+    ["🙂 Добро", formatRange(t3, midEnd), "Добро начало, продължавай смело!"],
+    ["😐 За упражнение", formatRange(0, lowEnd), "Ще потренираме още заедно!"]
+  ];
+}
+
+function renderScaleTables(totalMax) {
+  const scaleType = document.getElementById("scaleType").value;
+  const rows = buildScaleRows(totalMax, scaleType);
+  const html = rows.map(r => `
+    <tr>
+      <td><b>${r[0]}</b></td>
+      <td>${r[1]}</td>
+      <td>${r[2]}</td>
+    </tr>
+  `).join("");
+
+  document.querySelector("#worksheetScaleTable tbody").innerHTML = html;
+  document.querySelector("#teacherScaleTable tbody").innerHTML = html;
+}
+
+function updateAnswerSheetList() {
+  const listEl = document.getElementById("answerList");
+  listEl.innerHTML = currentExercises.map(e => {
+    return `<li>${escapeHtml(e.text)} = <b>${e.answer}</b> <span style="color:#5c738a">(${currentExPoints} т.)</span></li>`;
+  }).join("");
+}
+
+function updateProblemAnswerBox() {
+  if (!currentProblem) return;
+  document.getElementById("problemAnswer").innerHTML =
+    `<b>Текстова задача (${currentProbPoints} т.):</b> ${escapeHtml(currentProblem.calculation)}<br><b>Отговор:</b> ${currentProblem.answer}`;
+}
+
+function updatePointsSummaryOnly() {
+  const exCount = currentExercises.length;
+  const exTotal = exCount * currentExPoints;
+  const totalMax = exTotal + currentProbPoints;
+
+  document.querySelectorAll(".ex-pts").forEach(el => {
+    el.textContent = `${currentExPoints} т.`;
+  });
+
+  document.getElementById("scoreSummaryLine").innerHTML =
+    `Точки: _____ / ${totalMax} т. &nbsp;|&nbsp; Оценка: _________`;
+  document.getElementById("maxPointsLabel").textContent = `Максимум: ${totalMax} т.`;
+  document.getElementById("teacherMaxPoints").textContent = `${totalMax} т.`;
+
+  renderScaleTables(totalMax);
+  updateAnswerSheetList();
+  updateProblemAnswerBox();
+}
+
+function generate() {
+  const count = Number(document.getElementById("count").value) || 8;
+  const level = document.getElementById("level").value;
+  currentExPoints = Number(document.getElementById("exPoints").value) || 1;
+  currentProbPoints = Number(document.getElementById("probPoints").value) || 3;
+
+  currentExercises = Array.from({ length: count }, () => makeExercise(level));
+
+  const grid = document.getElementById("exercises");
+  grid.innerHTML = "";
+
+  currentExercises.forEach((e, idx) => {
+    const cell = document.createElement("div");
+    cell.className = "exercise";
+
+    const ptsTag = document.createElement("span");
+    ptsTag.className = "ex-pts";
+    ptsTag.textContent = `${currentExPoints} т.`;
+
+    const exprSpan = document.createElement("span");
+    exprSpan.className = "expr-edit";
+    exprSpan.contentEditable = "true";
+    exprSpan.spellcheck = false;
+    exprSpan.textContent = e.text;
+    exprSpan.title = "Кликни, за да редактираш задачата ръчно";
+
+    exprSpan.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter") {
+        ev.preventDefault();
+        exprSpan.blur();
+      }
+    });
+
+    exprSpan.addEventListener("input", () => {
+      const newText = exprSpan.textContent.trim();
+      currentExercises[idx].text = newText;
+      currentExercises[idx].answer = evaluateExpression(newText);
+      updateAnswerSheetList();
+    });
+
+    const eqText = document.createTextNode(" = ");
+    const box = document.createElement("span");
+    box.className = "answer-box";
+
+    cell.appendChild(ptsTag);
+    cell.appendChild(exprSpan);
+    cell.appendChild(eqText);
+    cell.appendChild(box);
+    grid.appendChild(cell);
+  });
+
+  currentProblem = makeProblem(level, document.getElementById("theme").value);
+  document.getElementById("wordProblem").textContent = currentProblem.text;
+
+  const exTotal = count * currentExPoints;
+  const totalMax = exTotal + currentProbPoints;
+  document.getElementById("task1PointsBadge").textContent = `${count} × ${currentExPoints} т. = ${exTotal} т.`;
+  document.getElementById("task2PointsBadge").textContent = `${currentProbPoints} т.`;
+  document.getElementById("answerLevel").innerHTML =
+    `<b>Вид упражнения:</b> ${labels[level]} &nbsp;|&nbsp; <b>Максимален сбор:</b> ${totalMax} т. (${count} × ${currentExPoints} т. + ${currentProbPoints} т.)`;
+
+  updatePointsSummaryOnly();
+
+  document.getElementById("answerSheet").style.display = "none";
+  applyGridStyle();
+}
+
+document.getElementById("exPoints").addEventListener("change", () => {
+  currentExPoints = Number(document.getElementById("exPoints").value) || 1;
+  const count = currentExercises.length;
+  document.getElementById("task1PointsBadge").textContent = `${count} × ${currentExPoints} т. = ${count * currentExPoints} т.`;
+  updatePointsSummaryOnly();
+});
+
+document.getElementById("probPoints").addEventListener("change", () => {
+  currentProbPoints = Number(document.getElementById("probPoints").value) || 3;
+  document.getElementById("task2PointsBadge").textContent = `${currentProbPoints} т.`;
+  updatePointsSummaryOnly();
+});
+
+document.getElementById("scaleType").addEventListener("change", () => {
+  const totalMax = currentExercises.length * currentExPoints + currentProbPoints;
+  renderScaleTables(totalMax);
+});
+
+document.getElementById("task2PointsBadge").addEventListener("blur", (ev) => {
+  const match = ev.target.textContent.match(/\d+/);
+  if (match) {
+    currentProbPoints = Math.max(0, Number(match[0]));
+    ev.target.textContent = `${currentProbPoints} т.`;
+    updatePointsSummaryOnly();
+  }
+});
+
+document.getElementById("task1PointsBadge").addEventListener("blur", (ev) => {
+  const nums = ev.target.textContent.match(/\d+/g);
+  if (nums && nums.length >= 2) {
+    currentExPoints = Math.max(0, Number(nums[1]));
+    const count = currentExercises.length;
+    ev.target.textContent = `${count} × ${currentExPoints} т. = ${count * currentExPoints} т.`;
+    updatePointsSummaryOnly();
+  }
+});
+
+function applyGridStyle() {
+  const isLarge = document.getElementById("style").value === "large";
+  document.querySelectorAll(".exercise").forEach(el => {
+    el.style.backgroundSize = isLarge ? "25px 25px" : "18px 18px";
+  });
+}
+
+document.getElementById("style").addEventListener("change", applyGridStyle);
+
+function toggleAnswers() {
+  const s = document.getElementById("answerSheet");
+  s.style.display = s.style.display === "block" ? "none" : "block";
+}
+
+function printWorksheet() {
+  document.getElementById("answerSheet").style.display = "none";
+  window.print();
+}
+
+function printAll() {
+  document.getElementById("answerSheet").style.display = "block";
+  window.print();
+}
+
+generate();
+</script>
+</body>
+</html>
